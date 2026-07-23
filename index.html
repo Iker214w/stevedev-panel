@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SteveDev · Panel del canal (en vivo)</title>
+<style>
+:root{
+ --noche:#0E1B33; --noche2:#14254A; --linea:#243B6B;
+ --tinta:#EAF1FB; --tinta2:#9FB3D9; --tinta3:#66799F;
+ --azul:#1F8AC9; --azul-claro:#37A6E5; --oro:#F2C233; --grass:#57A64E; --rojo:#E05A4E;
+}
+*{box-sizing:border-box}
+body{background:var(--noche);color:var(--tinta);
+ font:15px/1.55 ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+ margin:0;padding:0 16px;min-height:100vh;
+ background-image:radial-gradient(1px 1px at 12% 18%,#ffffff55 50%,transparent 51%),
+  radial-gradient(1px 1px at 78% 9%,#ffffff44 50%,transparent 51%),
+  radial-gradient(1.5px 1.5px at 45% 30%,#ffffff33 50%,transparent 51%),
+  radial-gradient(1px 1px at 90% 38%,#ffffff3d 50%,transparent 51%),
+  radial-gradient(1px 1px at 30% 6%,#ffffff50 50%,transparent 51%);}
+main{max-width:780px;margin:0 auto;padding:28px 0 0}
+a{color:var(--azul-claro)} a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid var(--oro);outline-offset:2px}
+.cabecera{display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:6px}
+.wordmark{font-size:30px;font-weight:800;letter-spacing:2px;margin:0;text-wrap:balance}
+.wordmark .s{color:var(--grass)} .wordmark .d{color:var(--oro)}
+.sub{color:var(--tinta2);margin:2px 0 0;font-size:13px}
+.estado{margin:14px 0 26px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.actualizado{display:inline-flex;gap:8px;align-items:center;background:var(--noche2);
+ border:1px solid var(--linea);border-radius:4px;padding:6px 12px;font-size:12.5px;color:var(--tinta2)}
+.actualizado b{color:var(--grass);font-weight:600}
+.punto{width:8px;height:8px;background:var(--grass);border-radius:1px;display:inline-block}
+@media (prefers-reduced-motion:no-preference){.cargando .punto{animation:lat .8s infinite}.punto{animation:lat 2.4s infinite}}
+@keyframes lat{50%{opacity:.35}}
+button{background:var(--azul);border:0;color:#fff;font:inherit;font-size:12.5px;
+ padding:7px 14px;border-radius:4px;cursor:pointer}
+button:hover{background:var(--azul-claro)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin:0 0 30px}
+.tile{background:var(--noche2);border:1px solid var(--linea);border-radius:6px;padding:14px 16px}
+.tile .num{font-size:28px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.1}
+.tile .lbl{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--tinta2);margin-top:6px}
+h2{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:var(--tinta2);margin:0 0 14px;font-weight:600}
+section{margin-bottom:34px}
+.grafica{background:var(--noche2);border:1px solid var(--linea);border-radius:6px;
+ padding:18px 18px 14px;display:flex;flex-direction:column;gap:8px}
+.fila{display:grid;grid-template-columns:minmax(120px,38%) 1fr 60px;gap:10px;align-items:center}
+.fila-titulo{font-size:12.5px;color:var(--tinta2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pista{background:var(--noche);border-radius:4px;height:18px;overflow:hidden;
+ background-image:repeating-linear-gradient(90deg,transparent 0 calc(25% - 1px),var(--linea) calc(25% - 1px) 25%)}
+.barra{display:block;height:100%;background:var(--azul);border-radius:0 4px 4px 0;border-right:2px solid var(--noche2)}
+.fila:hover .barra{background:var(--azul-claro)}
+.valor{font-size:13px;font-variant-numeric:tabular-nums;text-align:right}
+#tip{position:fixed;pointer-events:none;background:#0A1426;border:1px solid var(--linea);
+ color:var(--tinta);padding:7px 10px;border-radius:4px;font-size:12px;max-width:280px;display:none;z-index:9}
+.lista{display:flex;flex-direction:column;gap:10px}
+.tarjeta{display:flex;gap:14px;background:var(--noche2);border:1px solid var(--linea);
+ border-radius:6px;padding:12px;align-items:center}
+.thumb{border-radius:4px;flex:none;object-fit:cover;width:72px;height:128px;background:var(--noche)}
+.tarjeta-cuerpo{min-width:0}
+.tarjeta-titulo{font-weight:700;text-decoration:none;color:var(--tinta);display:block;font-size:14.5px;line-height:1.35;margin-bottom:4px}
+.tarjeta-titulo:hover{color:var(--azul-claro)}
+.meta{font-size:12px;color:var(--tinta3);margin-bottom:8px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;gap:5px;align-items:center;font-size:12.5px;font-variant-numeric:tabular-nums;
+ background:var(--noche);border:1px solid var(--linea);border-radius:4px;padding:3px 8px;color:var(--tinta2)}
+.chip-oro{color:var(--oro)} .chip-verde{color:var(--grass)}
+.aviso{background:var(--noche2);border:1px solid var(--linea);border-left:3px solid var(--oro);
+ border-radius:6px;padding:16px 18px;margin-bottom:26px;font-size:13.5px}
+.aviso ol{margin:10px 0 12px;padding-left:20px} .aviso li{margin-bottom:6px}
+.aviso input{width:100%;max-width:420px;background:var(--noche);border:1px solid var(--linea);
+ color:var(--tinta);font:inherit;padding:8px 10px;border-radius:4px;margin:4px 8px 4px 0}
+.error{border-left-color:var(--rojo)}
+.pie{margin-top:44px;padding:22px 0 30px;border-top:1px solid var(--linea);color:var(--tinta3);font-size:12px;text-align:center}
+.skyline{height:34px;margin:40px -16px 0;background:
+ repeating-linear-gradient(90deg,#0A1426 0 22px,transparent 22px 30px,#0B1730 30px 58px,transparent 58px 66px,#091223 66px 92px,transparent 92px 104px);
+ border-bottom:6px solid #0A1426}
+</style>
+</head>
+<body>
+<main class="cargando" id="app">
+ <div class="cabecera">
+  <div>
+   <h1 class="wordmark"><span class="s">Steve</span><span class="d">Dev</span> · PANEL</h1>
+   <p class="sub">@Steve_developer-real · estadísticas del canal, actualizadas automáticamente</p>
+  </div>
+ </div>
+ <div class="estado">
+  <span class="actualizado"><span class="punto"></span> <span id="estado-txt">Cargando datos en vivo…</span></span>
+  <button id="btn-refrescar" type="button">Actualizar ahora</button>
+ </div>
+ <div id="contenido"></div>
+ <div class="skyline" aria-hidden="true"></div>
+ <p class="pie">Panel en vivo del equipo SteveDev · datos públicos vía YouTube Data API v3 · CTR y retención son privados de Studio</p>
+</main>
+<div id="tip" role="tooltip"></div>
+<script>
+"use strict";
+/* ===== CONFIG ===== */
+const API_KEY_EMBEBIDA = "";           // ← se rellena al desplegar; si está vacía se pide una vez y se guarda en este navegador
+const HANDLE = "Steve_developer-real"; // sin @
+const SERIES = { "MK_46xHQN0w": "¿HUMO O NO? #1" };
+
+const $=s=>document.querySelector(s);
+const fmt=v=>v==null?"—":Number(v).toLocaleString("es-ES");
+const esc=s=>s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+function durISO(d){const m=d.match(/PT(?:(\d+)M)?(?:(\d+)S)?/)||[];return (Number(m[1]||0)*60+Number(m[2]||0))+" s";}
+function fecha(iso){const d=new Date(iso);return d.toLocaleDateString("es-ES",{day:"2-digit",month:"2-digit",year:"numeric"});}
+
+function claveAPI(){
+ return API_KEY_EMBEBIDA || localStorage.getItem("yt_api_key") || "";
+}
+function pedirClave(msjExtra){
+ $("#estado-txt").textContent="Falta configurar la clave de la API";
+ $("#contenido").innerHTML=`<div class="aviso ${msjExtra?"error":""}">
+  ${msjExtra?`<p><b>${esc(msjExtra)}</b></p>`:""}
+  <p><b>La API ya está habilitada ✅</b> (proyecto "My First Project", cuenta iker50968). Solo falta tu clave (30 segundos, una sola vez):</p>
+  <ol>
+   <li>Abre <a href="https://console.cloud.google.com/apis/credentials?project=quixotic-bonito-503311-f9" target="_blank" rel="noopener">Credenciales del proyecto</a> — con la cuenta <b>iker50968@gmail.com</b> activa (arriba a la derecha).</li>
+   <li><b>Crear credenciales → Clave de API</b> → <b>Copiar</b>.</li>
+   <li>Recomendado: <b>Restringir clave</b> → "Referentes HTTP" → <code>https://*.github.io/*</code>.</li>
+   <li>Pégala aquí:</li>
+  </ol>
+  <input id="in-key" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="AIza…" aria-label="Clave de API de YouTube">
+  <button type="button" onclick="guardarClave()">Guardar y cargar</button>
+  <p style="color:var(--tinta3);font-size:12px;margin-bottom:0">La clave solo lee datos públicos y queda guardada en tu navegador (localStorage), no se envía a ningún sitio que no sea Google.</p>
+ </div>`;
+ document.getElementById("app").classList.remove("cargando");
+}
+function guardarClave(){
+ const v=$("#in-key").value.trim();
+ if(v){localStorage.setItem("yt_api_key",v);cargar();}
+}
+
+async function yt(recurso,params){
+ const u=new URL("https://www.googleapis.com/youtube/v3/"+recurso);
+ Object.entries(params).forEach(([k,v])=>u.searchParams.set(k,v));
+ u.searchParams.set("key",claveAPI());
+ const r=await fetch(u);
+ if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error((e.error&&e.error.message)||("HTTP "+r.status));}
+ return r.json();
+}
+
+async function cargarJSON(){
+ document.getElementById("app").classList.add("cargando");
+ $("#estado-txt").textContent="Cargando estadísticas…";
+ try{
+  const r=await fetch("stats.json?t="+Date.now());
+  if(!r.ok)throw new Error("stats.json no disponible todavía (HTTP "+r.status+")");
+  const d=await r.json();
+  const vids=d.videos.map(x=>({...x,dur:x.dur+" s"})).sort((a,b)=>b.vistas-a.vistas);
+  render({statistics:{subscriberCount:d.subs,hiddenSubscriberCount:d.subs==null}},vids);
+  const cuando=new Date(d.actualizado).toLocaleString("es-ES",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  $("#estado-txt").innerHTML=`Actualización automática · <b>${cuando}</b> (cada ~10 min) · <a href="#" onclick="pedirClave();return false">activar modo tiempo real</a>`;
+ }catch(err){
+  $("#estado-txt").textContent="Error: "+err.message;
+  document.getElementById("app").classList.remove("cargando");
+ }
+}
+
+async function cargar(){
+ if(!claveAPI())return cargarJSON();
+ document.getElementById("app").classList.add("cargando");
+ $("#estado-txt").textContent="Cargando datos en vivo…";
+ try{
+  const ch=await yt("channels",{part:"snippet,statistics,contentDetails",forHandle:HANDLE});
+  if(!ch.items||!ch.items.length)throw new Error("Canal no encontrado");
+  const c=ch.items[0];
+  const uploads=c.contentDetails.relatedPlaylists.uploads;
+  const pl=await yt("playlistItems",{part:"contentDetails",playlistId:uploads,maxResults:"50"});
+  const ids=pl.items.map(i=>i.contentDetails.videoId).join(",");
+  const vs=await yt("videos",{part:"snippet,statistics,contentDetails",id:ids});
+  const vids=vs.items.map(v=>({
+   id:v.id,titulo:v.snippet.title,fecha:fecha(v.snippet.publishedAt),
+   dur:durISO(v.contentDetails.duration),
+   vistas:Number(v.statistics.viewCount||0),
+   likes:v.statistics.likeCount!=null?Number(v.statistics.likeCount):null,
+   coms:v.statistics.commentCount!=null?Number(v.statistics.commentCount):null,
+   thumb:(v.snippet.thumbnails.medium||v.snippet.thumbnails.default||{}).url||""
+  })).sort((a,b)=>b.vistas-a.vistas);
+  render(c,vids);
+ }catch(err){
+  // Modo tiempo real falló: SIEMPRE mostramos los datos del robot, PERO explicando el error.
+  await cargarJSON();
+  const m=err.message||"";
+  let diag="";
+  if(/not valid|API key not valid/i.test(m)) diag="La clave no es válida. ¿La copiaste entera (empieza por AIza y son ~39 caracteres)? Prueba a crear una nueva.";
+  else if(/has not been used|is disabled/i.test(m)) diag="La API v3 no está activa en el proyecto de ESA clave. Crea la clave en el proyecto 'My First Project' (quixotic-bonito-503311-f9), donde ya está habilitada.";
+  else if(/referer|referrer|blocked|restrict/i.test(m)) diag="La clave tiene una restricción de dominio que bloquea esta página. En la consola: la clave → Restringir clave → Referentes HTTP → añade  https://iker214w.github.io/*  (o quita la restricción para probar).";
+  else if(/quota|exceeded/i.test(m)) diag="Se agotó el cupo diario gratuito de la API. Vuelve a intentarlo mañana.";
+  else diag=m;
+  const guardada=!!localStorage.getItem("yt_api_key");
+  $("#estado-txt").innerHTML=`⚠️ Modo tiempo real no activó · <a href="#" onclick="pedirClave();return false">reintentar clave</a>`;
+  const box=document.createElement("div");
+  box.className="aviso error";
+  box.innerHTML=`<p><b>La clave no funcionó — te muestro los datos automáticos mientras tanto.</b></p>
+   <p>Motivo: ${esc(diag)}</p>
+   <p style="color:var(--tinta3);font-size:12px;margin-bottom:0">Mensaje técnico: <code>${esc(m)}</code></p>`;
+  $("#contenido").prepend(box);
+  if(guardada&&/not valid/i.test(m)) localStorage.removeItem("yt_api_key");
+ }
+}
+
+function render(c,vids){
+ const totV=vids.reduce((s,x)=>s+x.vistas,0);
+ const totL=vids.reduce((s,x)=>s+(x.likes||0),0);
+ const totC=vids.reduce((s,x)=>s+(x.coms||0),0);
+ const maxV=Math.max(...vids.map(x=>x.vistas),1);
+ const subs=c.statistics.hiddenSubscriberCount?null:Number(c.statistics.subscriberCount);
+ const barras=vids.map(x=>{
+  const t=esc(x.titulo),corto=t.length>34?t.slice(0,33)+"…":t;
+  const tipTxt=`${t} · ${fmt(x.vistas)} vistas · ${fmt(x.likes)} me gusta · ${fmt(x.coms)} comentarios · ${x.fecha}`;
+  return `<div class="fila" data-tip="${tipTxt}" role="img" aria-label="${tipTxt}">
+   <span class="fila-titulo">${corto}</span>
+   <span class="pista"><span class="barra" style="width:${Math.max(2.5,x.vistas/maxV*100).toFixed(1)}%"></span></span>
+   <span class="valor">${fmt(x.vistas)}</span></div>`;}).join("");
+ const tarjetas=vids.map(x=>{
+  const serie=SERIES[x.id]?`<span class="chip chip-oro">${SERIES[x.id]}</span>`:"";
+  return `<article class="tarjeta">
+   <img class="thumb" src="${x.thumb}" alt="" loading="lazy">
+   <div class="tarjeta-cuerpo">
+    <a class="tarjeta-titulo" href="https://youtube.com/shorts/${x.id}" target="_blank" rel="noopener">${esc(x.titulo)}</a>
+    <div class="meta">${x.fecha} · ${x.dur} ${serie}</div>
+    <div class="chips">
+     <span class="chip">▶ ${fmt(x.vistas)}</span>
+     <span class="chip chip-oro">👍 ${fmt(x.likes)}</span>
+     <span class="chip chip-verde">💬 ${fmt(x.coms)}</span>
+    </div></div></article>`;}).join("");
+ $("#contenido").innerHTML=`
+  <div class="tiles">
+   ${subs!=null?`<div class="tile"><div class="num">${fmt(subs)}</div><div class="lbl">Suscriptores</div></div>`:""}
+   <div class="tile"><div class="num">${fmt(totV)}</div><div class="lbl">Vistas</div></div>
+   <div class="tile"><div class="num">${fmt(totL)}</div><div class="lbl">Me gusta</div></div>
+   <div class="tile"><div class="num">${fmt(totC)}</div><div class="lbl">Comentarios</div></div>
+   <div class="tile"><div class="num">${vids.length}</div><div class="lbl">Vídeos</div></div>
+  </div>
+  <section><h2>Vistas por vídeo</h2><div class="grafica">${barras}</div></section>
+  <section><h2>Todos los vídeos</h2><div class="lista">${tarjetas}</div></section>`;
+ $("#estado-txt").innerHTML=`Datos en vivo · <b>${new Date().toLocaleTimeString("es-ES")}</b>`;
+ document.getElementById("app").classList.remove("cargando");
+ const tip=$("#tip");
+ document.querySelectorAll(".fila").forEach(f=>{
+  f.addEventListener("mousemove",e=>{tip.textContent=f.dataset.tip;tip.style.display="block";
+   tip.style.left=Math.min(e.clientX+14,innerWidth-290)+"px";tip.style.top=(e.clientY+16)+"px";});
+  f.addEventListener("mouseleave",()=>tip.style.display="none");
+ });
+}
+document.getElementById("btn-refrescar").addEventListener("click",cargar);
+cargar();
+</script>
+</body>
+</html>
